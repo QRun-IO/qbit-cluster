@@ -118,7 +118,7 @@ class ClusterSettingsWidgetHealthTest extends BaseClusterTest
       assertThat(rows.get(0).get("heartbeat")).isEqualTo("5 hours ago");
       assertThat(rows.get(2).get("status")).isEqualTo("Up, drain requested");
       assertThat(rows.get(3).get("heartbeat")).isEqualTo("3 minutes ago");
-      assertThat(table.getColumns()).hasSize(6);
+      assertThat(table.getColumns()).as("four columns: readable at every width").hasSize(4);
       assertThat(lost).isNotNull();
 
       assertThat(ClusterNodesWidgetRenderer.class).isNotNull();
