@@ -1,0 +1,167 @@
+bundle: qbit-cluster
+version: 0.1.0
+layer: QBIT
+entries:
+- key: app:cluster;slot:help
+  summary: The servers (nodes) running this application, what each one does, and whether each one is healthy.
+  content: |
+    When the application runs on more than one server, each running copy is a **node**. Every node records itself in **{{label:cluster_node}}** when it starts and then sends a heartbeat every few seconds, so this page shows which nodes are up, which roles they have (Web, Worker, Scheduler, ESB) and when each was last heard from.
+
+    If a node goes quiet for longer than the configured time, another node marks it **Lost** and raises an alert. To take a node out of service gently, select it in **{{label:cluster_node}}** and use **{{label:clusterDrainNode}}**.
+
+    **{{label:cluster_lease}}** shows which node currently runs each one-at-a-time background task, and **{{label:cluster_setting}}** holds the timings.
+- key: widget:clusterNodes;slot:label
+  summary: Every node that is up, draining or lost, grouped by role, with how long ago it last sent a heartbeat.
+  content: |
+    A node with several roles appears once under each. Stopped nodes are not shown here; they stay in the Nodes table until they are cleaned up. If a heartbeat is older than a minute or so, the node is probably in trouble.
+- key: possibleValueSource:cluster_node_status;slot:help
+  summary: Where a node is in its life.
+  content: |
+    - **Up:** running and sending heartbeats.
+    - **Draining:** finishing what it is doing; it takes no new requests or background work.
+    - **Lost:** stopped sending heartbeats without shutting down cleanly (a crash, a forced kill, a network problem).
+    - **Stopped:** shut down cleanly.
+
+- key: table:cluster_node;slot:help
+  summary: One row for each node of the application, kept up to date by the node itself.
+  content: |
+    Each node adds or refreshes its own row when it starts, then updates **{{label:cluster_node.heartbeatAt}}** and its live numbers every heartbeat. Rows cannot be added or edited here; they reflect what the nodes report.
+
+    Use **{{label:clusterDrainNode}}** to ask a node to stop taking new work, and **{{label:clusterCancelDrain}}** to withdraw that request before the node acts on it. Rows of stopped and lost nodes are deleted automatically after the number of days in the retain_stopped_days setting; you may also delete an old row yourself.
+
+    **How rows get created:** automatically, by each node when it starts. If the list is empty, no node with the Cluster feature has started against this database yet.
+- key: table:cluster_node;section:identity
+  summary: Which node this is, what it does, and whether it is healthy.
+- key: table:cluster_node;section:placement
+  summary: Where the node runs and which version of the application it runs.
+- key: table:cluster_node;section:work
+  summary: What work the node takes on and how much memory it uses.
+- key: table:cluster_node;section:drain
+  summary: Whether someone has asked this node to drain, who, and why.
+- key: table:cluster_node;section:dates
+  summary: When the node started and when its row was created and last changed.
+- key: table:cluster_node;field:nodeId
+  summary: The node's unique name, usually its pod or host name.
+  content: |
+    Taken from the QQQ_NODE_ID setting, else the HOSTNAME (in Kubernetes, the pod name), else the server's host name.
+- key: table:cluster_node;field:podName
+  summary: The Kubernetes pod running this node, when the deployment provides it.
+  content: |
+    From the QQQ_POD_NAME environment variable (the Kubernetes Downward API). Empty outside Kubernetes.
+- key: table:cluster_node;field:k8sNodeName
+  summary: The Kubernetes server (worker machine) the pod is scheduled on, when provided.
+  content: |
+    From the QQQ_K8S_NODE_NAME environment variable. Useful to see whether several nodes share one machine.
+- key: table:cluster_node;field:zone
+  summary: The availability zone or site the node runs in, when provided.
+  content: |
+    From the QQQ_ZONE environment variable.
+- key: table:cluster_node;field:deployment
+  summary: The deployment (group of identical nodes) this node belongs to, when provided.
+  content: |
+    From the QQQ_DEPLOYMENT environment variable, for example website-backend or website-backend-worker.
+- key: table:cluster_node;field:roles
+  summary: 'What this node does: WEB, WORKER, SCHEDULER and/or ESB, as a comma list.'
+  content: |
+    - **WEB:** serves people and API requests.
+    - **WORKER:** runs durable background jobs.
+    - **SCHEDULER:** runs scheduled processes.
+    - **ESB:** runs message triggers.
+
+    Set with the QQQ_NODE_ROLES environment variable; a node without it does everything.
+- key: table:cluster_node;field:version
+  summary: The application version this node runs.
+  content: |
+    The version the application reports (or the QQQ_APP_VERSION environment variable); otherwise the QQQ version, shown as "qqq" and a number. During a rolling update, nodes with two versions are normal for a few minutes.
+- key: table:cluster_node;field:startedAt
+  summary: When this node last started.
+- key: table:cluster_node;field:heartbeatAt
+  summary: When this node last reported that it is alive.
+  content: |
+    Updated every heartbeat (15 seconds by default). For a stopped node, the time it stopped. A node whose heartbeat is older than the lost_after_seconds setting is marked Lost.
+- key: table:cluster_node;field:status
+  summary: 'Where the node is in its life: {{values:cluster_node_status}}.'
+- key: table:cluster_node;field:workerThreads
+  summary: How many durable-job worker threads the node runs; 0 means it runs no background jobs.
+  content: |
+    Empty when the node uses the application's default.
+- key: table:cluster_node;field:schedulerActive
+  summary: Whether this node runs scheduled processes.
+- key: table:cluster_node;field:esbTriggersActive
+  summary: Whether this node runs message (ESB) triggers.
+- key: table:cluster_node;field:asyncJobsRunning
+  summary: How many process steps are running on this node right now.
+  content: |
+    A draining node waits for these to finish before it stops.
+- key: table:cluster_node;field:heapUsedMb
+  summary: Memory the node's Java process is using, in megabytes, at the last heartbeat.
+- key: table:cluster_node;field:heapMaxMb
+  summary: The most memory the node's Java process may use, in megabytes.
+- key: table:cluster_node;field:drainRequested
+  summary: Whether someone has asked this node to drain.
+  content: |
+    Set by **{{label:clusterDrainNode}}** and cleared by **{{label:clusterCancelDrain}}** or when the node restarts. The node acts on it at its next heartbeat.
+- key: table:cluster_node;field:drainRequestedBy
+  summary: Who asked this node to drain.
+- key: table:cluster_node;field:drainReason
+  summary: The reason given when the drain was requested.
+
+- key: table:cluster_lease;slot:help
+  summary: Which node currently runs each background task that must run on only one node at a time.
+  content: |
+    A lease is held by one node until it expires; the holder renews it while it is healthy. When the holder stops or is lost, the lease expires and another node takes it over. The built-in **cluster-sweeper** lease decides which node marks silent nodes as Lost and cleans up old rows.
+
+    To hand a lease over at once, clear **{{label:cluster_lease.holderNodeId}}** or set **{{label:cluster_lease.expiresAt}}** in the past; another node takes it within one heartbeat.
+
+    **How rows get created:** automatically, the first time any node asks for a lease by name. If the list is empty, no node has started yet.
+- key: table:cluster_lease;section:identity
+  summary: The lease, who holds it, and until when.
+- key: table:cluster_lease;section:dates
+  summary: When the current holder got the lease, its change counter, and the row dates.
+- key: table:cluster_lease;field:name
+  summary: The name of the task the lease is for, such as cluster-sweeper.
+- key: table:cluster_lease;field:holderNodeId
+  summary: The node that holds the lease; empty when it was released.
+- key: table:cluster_lease;field:expiresAt
+  summary: When the lease runs out unless its holder renews it.
+- key: table:cluster_lease;field:version
+  summary: A counter that goes up on every change, so two nodes can never take the lease at the same moment.
+- key: table:cluster_lease;field:acquiredAt
+  summary: When the current holder took the lease.
+
+- key: table:cluster_setting;slot:help
+  summary: Timings for heartbeats, lost-node detection, clean-up and alerts.
+  content: |
+    - **heartbeat_seconds** (15): how often each node reports that it is alive.
+    - **lost_after_seconds** (60): a node silent this long is marked Lost. Keep it at least three heartbeats.
+    - **retain_stopped_days** (7): rows of stopped and lost nodes are deleted after this many days.
+    - **alert_on_lost** (true): whether a lost node raises the "Cluster node lost" alert.
+
+    Changes take effect at each node's next heartbeat. A missing or invalid row uses the default shown above.
+
+    **How rows get created:** the defaults are added by the database setup when the application is installed. If the list is empty, the defaults above still apply; you can add a row to change one.
+- key: table:cluster_setting;section:identity
+  summary: The setting and its value.
+- key: table:cluster_setting;section:dates
+  summary: When the setting was added and last changed.
+- key: table:cluster_setting;field:settingKey
+  summary: Which setting this row holds, such as the heartbeat interval in seconds.
+- key: table:cluster_setting;field:settingValue
+  summary: The value; a whole number for the seconds and days settings, true or false for the alert setting.
+- key: table:cluster_setting;field:description
+  summary: What the setting does.
+
+- key: process:clusterDrainNode;slot:help
+  summary: Ask the selected nodes to stop taking new requests and work and finish what they are doing.
+  content: |
+    Select one or more nodes that are up and run this. The Review screen shows which nodes will be asked and which are skipped and why, and warns you if no other node would remain up.
+
+    Each node sees the request at its next heartbeat (within about 15 seconds). It then reports not ready, so the load balancer stops sending it people's requests, stops picking up background work, and lets running steps finish. It keeps running until it is stopped or restarted, which is what you usually do next.
+
+    Draining cannot be undone once the node has started. Before that, use **{{label:clusterCancelDrain}}**.
+- key: process:clusterDrainNode;field:clusterDrainReason
+  summary: Why you are draining the node, for example "maintenance on this server". Optional.
+- key: process:clusterCancelDrain;slot:help
+  summary: Withdraw a drain request that the node has not acted on yet.
+  content: |
+    Only nodes with a drain request that are still up can be changed; the Review screen lists any others with the reason. A node that has already started draining cannot be undrained; restart it instead.
