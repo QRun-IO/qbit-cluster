@@ -25,7 +25,7 @@ section E (summary in [docs/DESIGN.md](docs/DESIGN.md)).
 <dependency>
    <groupId>com.kingsrook.qbits</groupId>
    <artifactId>qbit-cluster</artifactId>
-   <version>0.1.0-RC.1</version>
+   <version>0.1.0-RC.1</version><!-- first release; see GitHub releases for the latest -->
 </dependency>
 ```
 

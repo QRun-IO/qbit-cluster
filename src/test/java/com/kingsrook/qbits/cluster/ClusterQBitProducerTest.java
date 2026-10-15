@@ -89,7 +89,14 @@ class ClusterQBitProducerTest extends BaseClusterTest
       assertThat(QAlertTypeMetaData.of(qInstance, ClusterAlerts.NODE_LOST)).isNotNull();
       assertThat(HealthChecksMetaData.ofOrWithNew(qInstance).getChecks()).anyMatch(check -> ClusterHeartbeatHealthCheck.NAME.equals(check.getName()));
       assertThat(qInstance.getRuntimeServices()).extracting(reference -> reference.getName()).containsOnlyOnce(ClusterRuntimeService.class.getName());
-      assertThat(ClusterQBitProducer.version()).isEqualTo("0.1.0-RC.1");
+      ////////////////////////////////////////////////////////////////////
+      // the version comes from the build (filtered qbit-cluster.properties) //
+      ////////////////////////////////////////////////////////////////////
+      assertThat(ClusterQBitProducer.version()).matches("[0-9]+[.][0-9]+[.][0-9]+(-[A-Za-z0-9.]+)?");
+      if(System.getProperty("qbit.artifactVersion") != null)
+      {
+         assertThat(ClusterQBitProducer.version()).isEqualTo(System.getProperty("qbit.artifactVersion"));
+      }
    }
 
 
