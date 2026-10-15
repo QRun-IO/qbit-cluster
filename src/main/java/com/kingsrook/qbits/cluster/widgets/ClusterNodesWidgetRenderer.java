@@ -67,8 +67,6 @@ public class ClusterNodesWidgetRenderer extends AbstractWidgetRenderer
    static final String NODE      = "node";
    static final String STATUS    = "status";
    static final String HEARTBEAT = "heartbeat";
-   static final String WHERE     = "where";
-   static final String VERSION   = "version";
 
 
 
@@ -96,7 +94,7 @@ public class ClusterNodesWidgetRenderer extends AbstractWidgetRenderer
       }
 
       TableData table = new TableData(null, List.of(
-         column("Role", ROLE), column("Node", NODE), column("Status", STATUS), column("Last heartbeat", HEARTBEAT), column("Where", WHERE), column("Version", VERSION)), rows)
+         column("Role", ROLE), column("Node", NODE), column("Status", STATUS), column("Last heartbeat", HEARTBEAT)), rows)
          .withNoRowsFoundHTML("No nodes are running. A node appears here once it starts with the Cluster qbit.")
          .withRowsPerPage(50)
          .withHidePaginationDropdown(true);
@@ -112,13 +110,25 @@ public class ClusterNodesWidgetRenderer extends AbstractWidgetRenderer
    {
       Map<String, Object> row = new LinkedHashMap<>();
       row.put(ROLE, roleLabel(role));
-      row.put(NODE, node.getValueString(ClusterTables.NODE_ID));
+      row.put(NODE, nodeText(node));
       row.put(STATUS, statusText(node));
       row.put(HEARTBEAT, age(node.getValueInstant(ClusterTables.HEARTBEAT_AT), now));
-      row.put(WHERE, Stream.of(node.getValueString(ClusterTables.K8S_NODE_NAME), node.getValueString(ClusterTables.ZONE), node.getValueString(ClusterTables.DEPLOYMENT))
-         .filter(StringUtils::hasContent).collect(Collectors.joining(", ")));
-      row.put(VERSION, node.getValueString(ClusterTables.VERSION) == null ? "" : node.getValueString(ClusterTables.VERSION));
       return (row);
+   }
+
+
+
+   /*******************************************************************************
+    ** The node id, with where it runs and its version folded in (four columns
+    ** keep the table readable at every width): "web-7f9 (k8s-2, website-backend, 0.1.110)".
+    *******************************************************************************/
+   static String nodeText(QRecord node)
+   {
+      String details = Stream.of(node.getValueString(ClusterTables.K8S_NODE_NAME), node.getValueString(ClusterTables.ZONE), node.getValueString(ClusterTables.DEPLOYMENT),
+            node.getValueString(ClusterTables.VERSION))
+         .filter(StringUtils::hasContent).collect(Collectors.joining(", "));
+      String nodeId = node.getValueString(ClusterTables.NODE_ID);
+      return (details.isEmpty() ? nodeId : nodeId + " (" + details + ")");
    }
 
 
