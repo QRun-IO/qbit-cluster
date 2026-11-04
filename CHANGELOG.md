@@ -5,6 +5,17 @@ and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed
+
+- Reconciled legacy release-branch history with the current Gitea CI while retaining the develop
+  SNAPSHOT revision, so normal RC cuts can merge cleanly.
+
+### Fixed
+
+- SQL changelog headers: explanatory "-- Include it from the host..." comments were parsed as a
+  licensed Liquibase `include` directive. Replaced with neutral wording; changeset bodies and
+  schema are unchanged.
+
 ## [0.1.0] - Unreleased
 
 ### Added

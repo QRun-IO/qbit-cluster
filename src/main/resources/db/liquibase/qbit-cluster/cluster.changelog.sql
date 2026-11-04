@@ -3,7 +3,7 @@
 -- https://www.apache.org/licenses/LICENSE-2.0
 
 -- qbit-cluster schema (QRun-IO/qqq docs/specs/2026-10-15-cluster-ha-design.md section E).
--- Include it from the host's master changelog, then the defaults:
+-- Load this file from the host's master changelog, then the defaults:
 --
 --   - include: { file: db/liquibase/qbit-cluster/cluster.changelog.sql }
 --   - include: { file: db/liquibase/qbit-cluster/cluster-defaults.changelog.sql }
